@@ -6,7 +6,6 @@ import {
   onSnapshot,
   addDoc,
   serverTimestamp,
-  orderBy,
   getDocs,
   doc,
   writeBatch,
@@ -102,11 +101,13 @@ async function requestNotificationPermission(): Promise<void> {
 function showNotification(from: string, content: string): void {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   try {
+    // `renotify` existe en browsers modernos, pero en algunas versiones de la lib DOM de TS
+    // no está tipado. Se fuerza con cast para evitar el error sin cambiar comportamiento.
     new Notification(`💬 Nuevo mensaje de ${from}`, {
       body: content.length > 80 ? content.slice(0, 80) + '…' : content,
       icon: '/favicon.ico',
       tag: `msg_${from}`,
-      renotify: true,
+      ...( { renotify: true } as NotificationOptions ),
     });
   } catch { /**/ }
 }
@@ -147,12 +148,13 @@ export function useMessages(currentUsername: string | null) {
       return;
     }
 
-    usernameRef.current = currentUsername;
+    const username = currentUsername;
+    usernameRef.current = username;
     sentRef.current     = [];
     recvRef.current     = [];
 
     // Mostrar caché mientras llegan los datos de Firestore
-    const cached = loadCache(currentUsername);
+    const cached = loadCache(username);
     setMessages(cached);
     prevIdsRef.current = new Set(cached.map(m => m.id));
     setLoading(true);
@@ -169,7 +171,7 @@ export function useMessages(currentUsername: string | null) {
       merged.forEach(msg => {
         if (
           !prevIdsRef.current.has(msg.id) &&
-          msg.to === currentUsername &&
+          msg.to === username &&
           msg.timestamp !== null
         ) {
           showNotification(msg.from, msg.content);
@@ -179,7 +181,7 @@ export function useMessages(currentUsername: string | null) {
       prevIdsRef.current = new Set(merged.map(m => m.id));
 
       setMessages(merged);
-      saveCache(currentUsername, merged); // persistir SIEMPRE
+      saveCache(username, merged); // persistir SIEMPRE
       setLoading(false);
     }
 
