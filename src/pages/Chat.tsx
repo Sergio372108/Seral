@@ -16,11 +16,14 @@ import {
   Check,
   CheckCheck,
   Smile,
-  Gift
+  Gift,
+  CornerUpLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EmojiPicker } from '@/components/EmojiPicker';
 import { GifPicker } from '@/components/GifPicker';
+import { ReplyBar, ReplyContext } from '@/components/ReplyPreview';
+import { useSwipeToReply } from '@/hooks/useSwipeToReply';
 
 interface Message {
   id: string;
@@ -29,6 +32,76 @@ interface Message {
   content: string;
   timestamp: any;
   read: boolean;
+  replyTo?: { id: string; from: string; content: string } | null;
+}
+
+// ── SwipeableMessage ──────────────────────────────────────────────────────────
+// Wrapper que añade el gesto swipe-to-reply a cada mensaje.
+// Aislado aquí para no ensuciar el render principal de Chat.
+interface SwipeableMessageProps {
+  msg: Message;
+  isMe: boolean;
+  formatTime: (ts: any) => string;
+  onReply: () => void;
+}
+
+function SwipeableMessage({ msg, isMe, formatTime, onReply }: SwipeableMessageProps) {
+  const { ref, onTouchStart, onTouchMove, onTouchEnd } = useSwipeToReply(onReply);
+
+  return (
+    <div
+      className={`flex w-full group ${isMe ? 'justify-end' : 'justify-start'}`}
+    >
+      <div
+        ref={ref}
+        className="max-w-[75%]"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{ willChange: 'transform' }}
+      >
+        {/* Si es GIF/sticker: sin burbuja, solo la imagen */}
+        {msg.content.startsWith('https://') && msg.content.includes('.gif') ? (
+          <img
+            src={msg.content}
+            alt="gif"
+            className="rounded-2xl max-w-[200px] max-h-[180px] object-contain"
+          />
+        ) : (
+          <div className={`px-4 py-2.5 rounded-2xl ${
+            isMe
+              ? 'bg-slate-900 text-white rounded-br-md'
+              : 'bg-white text-slate-800 rounded-bl-md shadow-sm border border-slate-200'
+          }`}>
+            {msg.replyTo && (
+              <ReplyContext
+                from={msg.replyTo.from}
+                content={msg.replyTo.content}
+                isMe={isMe}
+              />
+            )}
+            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+          </div>
+        )}
+        <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] text-slate-400">
+            {formatTime(msg.timestamp)}
+          </span>
+          {isMe && (
+            msg.read
+              ? <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+              : <Check className="w-3.5 h-3.5 text-slate-400" />
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onReply}
+        className={`self-start mt-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center ${isMe ? 'order-first mr-1' : 'ml-1'}`}
+      >
+        <CornerUpLeft className="w-3.5 h-3.5 text-slate-500" />
+      </button>
+    </div>
+  );
 }
 
 export function Chat() {
@@ -54,6 +127,7 @@ export function Chat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker]   = useState(false);
   const [showGifPicker, setShowGifPicker]       = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; from: string; content: string } | null>(null);
 
   // Refs para scroll — usamos div normal en lugar de ScrollArea
   // porque ScrollArea de shadcn no propaga height correctamente con flex-1
@@ -122,8 +196,9 @@ export function Chat() {
 
     setSending(true);
     try {
-      const ok = await sendMessage(selectedUser, trimmed);
+      const ok = await sendMessage(selectedUser, trimmed, replyingTo);
       if (ok) {
+        setReplyingTo(null);
         setInputMessage('');
         // Scroll al fondo inmediatamente tras enviar
         setTimeout(() => {
@@ -139,7 +214,7 @@ export function Chat() {
     } finally {
       setSending(false);
     }
-  }, [inputMessage, selectedUser, sending, sendMessage, currentUsername]);
+  }, [inputMessage, selectedUser, sending, sendMessage, currentUsername, replyingTo]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -371,41 +446,14 @@ export function Chat() {
                     <div className="space-y-3">
                       {msgs.map((msg) => {
                         const isMe = msg.from === currentUsername;
-
                         return (
-                          <div
+                          <SwipeableMessage
                             key={msg.id}
-                            className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div className="max-w-[75%]">
-                              {/* Si es GIF/sticker: sin burbuja, solo la imagen */}
-                              {msg.content.startsWith('https://') && msg.content.includes('.gif') ? (
-                                <img
-                                  src={msg.content}
-                                  alt="gif"
-                                  className="rounded-2xl max-w-[200px] max-h-[180px] object-contain"
-                                />
-                              ) : (
-                                <div className={`px-4 py-2.5 rounded-2xl ${
-                                  isMe
-                                    ? 'bg-slate-900 text-white rounded-br-md'
-                                    : 'bg-white text-slate-800 rounded-bl-md shadow-sm border border-slate-200'
-                                }`}>
-                                  <p className="text-sm leading-relaxed break-words">{msg.content}</p>
-                                </div>
-                              )}
-                              <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <span className="text-[10px] text-slate-400">
-                                  {formatTime(msg.timestamp)}
-                                </span>
-                                {isMe && (
-                                  msg.read
-                                    ? <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                                    : <Check className="w-3.5 h-3.5 text-slate-400" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                            msg={msg}
+                            isMe={isMe}
+                            formatTime={formatTime}
+                            onReply={() => setReplyingTo({ id: msg.id, from: msg.from, content: msg.content })}
+                          />
                         );
                       })}
                     </div>
@@ -432,6 +480,15 @@ export function Chat() {
                 </button>
               )}
             </div>
+
+            {/* ReplyBar — aparece justo antes del input cuando hay respuesta activa */}
+            {replyingTo && (
+              <ReplyBar
+                from={replyingTo.from}
+                content={replyingTo.content}
+                onCancel={() => setReplyingTo(null)}
+              />
+            )}
 
             {/* Input */}
             <div className="bg-white border-t border-slate-200 p-4 flex-shrink-0">

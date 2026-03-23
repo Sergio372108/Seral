@@ -26,6 +26,7 @@ export interface Message {
   timestamp: Timestamp | null;
   read: boolean;
   participants: string[];
+  replyTo?: { id: string; from: string; content: string } | null;
 }
 
 // ─── localStorage ─────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ function docToMessage(d: QueryDocumentSnapshot): Message {
     timestamp: data.timestamp ?? null,
     read: data.read ?? false,
     participants: data.participants ?? [data.from, data.to],
+    replyTo: data.replyTo ?? null,
   };
 }
 
@@ -231,7 +233,7 @@ export function useMessages(currentUsername: string | null) {
 
   // ── sendMessage ─────────────────────────────────────────────────────────────
   const sendMessage = useCallback(
-    async (to: string, content: string): Promise<boolean> => {
+    async (to: string, content: string, replyTo?: { id: string; from: string; content: string } | null): Promise<boolean> => {
       const username = usernameRef.current;
       if (!username || !to || !content.trim()) return false;
 
@@ -247,6 +249,7 @@ export function useMessages(currentUsername: string | null) {
         timestamp: Timestamp.now(),
         read: false,
         participants: [username, to],
+        replyTo: replyTo ?? null,
       };
 
       setMessages(prev => mergeAndSort([...prev, optimistic], []));
@@ -259,6 +262,7 @@ export function useMessages(currentUsername: string | null) {
           timestamp: serverTimestamp(),
           read: false,
           participants: [username, to],
+          ...(replyTo ? { replyTo } : {}),
         });
         // Una sola llamada: admin recibe siempre + destinatario si tiene ID
         getUserTelegramId(to)
