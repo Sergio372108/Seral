@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npx tsc -b && npx vite build",
+  "buildCommand": "npm install && node_modules/.bin/tsc -b && node_modules/.bin/vite build",
   "outputDirectory": "dist"
 }
