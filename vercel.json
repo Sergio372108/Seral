@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npm install && node_modules/.bin/tsc -b && node_modules/.bin/vite build",
+  "buildCommand": "npm ci --ignore-scripts && chmod +x node_modules/.bin/* && node_modules/.bin/tsc -b && node_modules/.bin/vite build",
   "outputDirectory": "dist"
 }
