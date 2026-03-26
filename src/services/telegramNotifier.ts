@@ -19,7 +19,7 @@ export async function sendTelegramNotification(
   // Si ambos están desactivados, salir inmediatamente
   if (!NOTIFY_ADMIN && !NOTIFY_RECIPIENTS) return;
 
-  const text      = `📩 Nuevo mensaje\nDe: ${fromUser}\nPara: ${toUser}\n💬 ${content}`;
+  const text      = `${fromUser} te ha enviado un mensaje: \n${content}`;
   const adminText = `🔧 [ADMIN] Nuevo mensaje\nDe: ${fromUser}\nPara: ${toUser}\n💬 ${content}`;
 
   const send = (chat_id: string, message: string) => {

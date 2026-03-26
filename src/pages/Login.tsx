@@ -45,7 +45,7 @@ export function Login() {
             Mensajería Privada
           </h1>
           <p className="text-slate-500 mt-1 text-sm">
-            Conversaciones seguras y privadas
+            Conversaciones privadas con amigos.
           </p>
         </div>
 

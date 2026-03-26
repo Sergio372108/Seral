@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMessages } from '@/hooks/useMessages';
 import { usePresence } from '@/hooks/usePresence';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Send,
@@ -58,7 +57,7 @@ function SwipeableMessage({ msg, isMe, formatTime, onReply }: SwipeableMessagePr
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        style={{ willChange: 'transform' }}
+        style={{ willChange: 'transform', touchAction: 'pan-y' }}
       >
         {/* Si es GIF/sticker: sin burbuja, solo la imagen */}
         {msg.content.startsWith('https://') && msg.content.includes('.gif') ? (
@@ -80,7 +79,7 @@ function SwipeableMessage({ msg, isMe, formatTime, onReply }: SwipeableMessagePr
                 isMe={isMe}
               />
             )}
-            <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+            <p className="text-sm leading-relaxed break-words" style={{ userSelect: 'text' }}>{msg.content}</p>
           </div>
         )}
         <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -132,7 +131,20 @@ export function Chat() {
   // Refs para scroll — usamos div normal en lugar de ScrollArea
   // porque ScrollArea de shadcn no propaga height correctamente con flex-1
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef             = useRef<HTMLInputElement>(null);
+  const inputRef             = useRef<HTMLTextAreaElement>(null);
+
+  // ── Auto-resize del textarea ───────────────────────────────────────────────
+  const adjustTextareaHeight = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    // Máximo ~5 líneas (approx 120px) para no ocupar demasiado
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputMessage, adjustTextareaHeight]);
 
   // ── Mensajes filtrados para la conversación activa ─────────────────────────
   const currentMessages = useMemo(() => {
@@ -492,7 +504,7 @@ export function Chat() {
 
             {/* Input */}
             <div className="bg-white border-t border-slate-200 p-4 flex-shrink-0">
-              <div className="flex gap-2 max-w-4xl mx-auto relative">
+              <div className="flex items-end gap-2 max-w-4xl mx-auto relative">
 
                 {/* Emoji Picker */}
                 {showEmojiPicker && (
@@ -522,7 +534,7 @@ export function Chat() {
                 <button
                   type="button"
                   onClick={() => { setShowEmojiPicker(p => !p); setShowGifPicker(false); }}
-                  className="h-12 w-12 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors flex-shrink-0"
+                  className="h-12 w-12 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors flex-shrink-0 mb-0"
                 >
                   <Smile className="w-5 h-5" />
                 </button>
@@ -536,15 +548,28 @@ export function Chat() {
                   <Gift className="w-5 h-5" />
                 </button>
 
-                <Input
+                {/* ── Textarea auto-expandible (reemplaza <Input>) ── */}
+                <textarea
                   ref={inputRef}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Escribe un mensaje..."
                   disabled={sending}
-                  className="flex-1 h-12 border-slate-200 focus:border-slate-400"
+                  rows={1}
+                  style={{
+                     resize: 'none',
+                     overflow: inputMessage.length > 100 ? 'auto' : 'hidden',
+                     minHeight: '48px',
+                     maxHeight: '120px',
+                     lineHeight: '1.5',
+                     scrollbarWidth: 'none',
+                     msOverflowStyle: 'none',
+                  }}
+                 
+                  className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-slate-400 focus:outline-none text-sm bg-white text-slate-900 placeholder:text-slate-400 transition-colors disabled:opacity-50"
                 />
+
                 <Button
                   onClick={handleSend}
                   disabled={!inputMessage.trim() || sending}

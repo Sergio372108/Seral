@@ -73,3 +73,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Ocultar scrollbar en textareas */
+textarea::-webkit-scrollbar {
+  display: none;
+}
