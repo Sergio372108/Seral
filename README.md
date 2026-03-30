@@ -1,21 +1,21 @@
-# Mensajería Privada con Firebase 🔥
+# Mensajería Privada con Firebase
 
 Aplicación de mensajería simple, segura y privada con correcciones de bugs y mejoras.
 
 ---
 
-## ✅ Bugs corregidos
+##  Bugs corregidos
 
 | Bug | Estado |
 |-----|--------|
-| Emisor no ve sus mensajes | ✅ Corregido |
-| Mensajes desaparecen al recargar | ✅ Corregido |
-| Notificaciones no se borran | ✅ Corregido |
-| Mensajes no persistentes | ✅ Corregido |
+| Emisor no ve sus mensajes |  Corregido |
+| Mensajes desaparecen al recargar |  Corregido |
+| Notificaciones no se borran |  Corregido |
+| Mensajes no persistentes |  Corregido |
 
 ---
 
-## 🚀 Configuración rápida
+## Configuración rápida
 
 ### 1. Firebase (OBLIGATORIO)
 
@@ -52,7 +52,7 @@ Ve a Firestore Database > Índices y crea:
 
 ---
 
-## 💻 Ejecutar localmente
+##  Ejecutar localmente
 
 ```bash
 # Instalar dependencias
@@ -72,25 +72,25 @@ Abre: http://localhost:5173
 
 ---
 
-## ✨ Características
+##  Características
 
-- 🔐 **Autenticación Firebase** - Login seguro
-- 💬 **Mensajes en tiempo real** - Conexión instantánea
-- 💾 **Persistencia** - Los mensajes se guardan en la nube
-- 🔔 **Notificaciones** - Badge con contador de no leídos
-- ✓✓ **Doble check** - Indicador de mensaje leído
-- 👁️ **Estado online** - Indicador de conexión
-- 📱 **Responsive** - Funciona en móvil y desktop
+-  **Autenticación Firebase** - Login seguro
+-  **Mensajes en tiempo real** - Conexión instantánea
+-  **Persistencia** - Los mensajes se guardan en la nube
+-  **Notificaciones** - Badge con contador de no leídos
+- **Doble check** - Indicador de mensaje leído
+-   **Estado online** - Indicador de conexión
+-  **Responsive** - Funciona en móvil y desktop
 
 ---
 
-## 🔍 Verificación
+##  Verificación
 
 Lee `VERIFICACION.md` para instrucciones detalladas de cómo probar que todo funciona.
 
 ---
 
-## 🐛 Solución de problemas
+##  Solución de problemas
 
 ### "Error al enviar mensaje"
 → Configura las reglas de Firestore (Paso 2 arriba)
@@ -103,7 +103,7 @@ Lee `VERIFICACION.md` para instrucciones detalladas de cómo probar que todo fun
 
 ---
 
-## 📁 Archivos importantes
+##  Archivos importantes
 
 - `src/hooks/useMessages.ts` - Sistema de mensajes
 - `src/hooks/usePresence.ts` - Estado online/offline
